@@ -1,0 +1,5 @@
+{
+  "_comment": "Map usernames to roles. Roles here OVERRIDE whatever is stored. Available roles are defined in server.config.json -> roles.",
+  "admin": "admin",
+  "mod_example": "moderator"
+}

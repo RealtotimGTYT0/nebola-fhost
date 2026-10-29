@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Owner profile · {name}</title><link rel="stylesheet" href="/style.css"><script src="/config.js"></script><script src="/app.js"></script>
+<style>
+.profile-wrap{max-width:760px;margin:0 auto}.profile-head{display:flex;gap:18px;align-items:center;margin-bottom:24px}.avatar{width:76px;height:76px;border-radius:24px;display:grid;place-items:center;font-size:2rem;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#07110f}.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.profile-grid .full{grid-column:1/-1}.field{margin:14px 0}.field label{display:block;margin-bottom:8px;color:var(--muted);font-size:.9rem}.field input,.field textarea{width:100%;box-sizing:border-box}.field textarea{min-height:110px;resize:vertical}.section-title{margin:0 0 6px}.subtle{font-size:.9rem;color:var(--muted)}@media(max-width:600px){.profile-grid{grid-template-columns:1fr}.profile-grid .full{grid-column:auto}}
+</style></head>
+<body><nav></nav><main class="fade profile-wrap">
+  <div class="profile-head"><div class="avatar" id="avatar">N</div><div><p class="muted" style="margin:0 0 4px">ACCOUNT SETTINGS</p><h1 style="margin:0;font-size:2.2rem">Owner <span class="gradient-text">profile</span></h1><p class="subtle" id="identity">Manage your profile details and password.</p></div></div>
+  <section class="card">
+    <h2 class="section-title">Profile details</h2><p class="subtle">This information is saved locally in this website's data folder.</p>
+    <form id="profileForm"><div class="profile-grid">
+      <div class="field"><label for="username">Username</label><input id="username" disabled></div>
+      <div class="field"><label for="role">Role</label><input id="role" disabled></div>
+      <div class="field full"><label for="displayName">Display name</label><input id="displayName" maxlength="60" placeholder="Your display name"></div>
+      <div class="field full"><label for="bio">Bio</label><textarea id="bio" maxlength="300" placeholder="A short description about the owner…"></textarea><div class="subtle">Up to 300 characters.</div></div>
+    </div><button class="btn primary" type="submit">Save profile</button><span class="subtle" id="profileMsg" style="margin-left:12px"></span></form>
+  </section>
+  <section class="card" style="margin-top:18px">
+    <h2 class="section-title">Change password</h2><p class="subtle">Use a unique password. Your new password takes effect immediately.</p>
+    <form id="passwordForm"><div class="profile-grid">
+      <div class="field full"><label for="currentPassword">Current password</label><input id="currentPassword" type="password" autocomplete="current-password" required></div>
+      <div class="field full"><label for="newPassword">New password</label><input id="newPassword" type="password" autocomplete="new-password" minlength="6" required></div>
+      <div class="field full"><label for="confirmPassword">Confirm new password</label><input id="confirmPassword" type="password" autocomplete="new-password" minlength="6" required></div>
+    </div><button class="btn primary" type="submit">Update password</button><span class="subtle" id="passwordMsg" style="margin-left:12px"></span></form>
+  </section>
+  <p class="subtle" style="margin-top:18px">Owner access is local to this installation. Do not expose this development server to the public internet without production security configuration.</p>
+</main><footer></footer>
+<script>
+requireLogin();
+async function loadProfile(){
+ try{
+  const {user}=await api("profile");
+  username.value=user.username;role.value=user.role;displayName.value=user.displayName||user.username;bio.value=user.bio||"";
+  avatar.textContent=(user.displayName||user.username||"N").trim().charAt(0).toUpperCase();
+  identity.textContent=(user.displayName||user.username)+" · "+user.role;
+ }catch(e){toast(e.message)}
+}
+profileForm.onsubmit=async(e)=>{e.preventDefault();profileMsg.textContent="Saving…";try{const r=await api("profile",{method:"PATCH",json:{displayName:displayName.value,bio:bio.value}});profileMsg.textContent=r.message;avatar.textContent=(r.user.displayName||r.user.username).trim().charAt(0).toUpperCase();identity.textContent=(r.user.displayName||r.user.username)+" · "+r.user.role;}catch(e){profileMsg.textContent=e.message}};
+passwordForm.onsubmit=async(e)=>{e.preventDefault();passwordMsg.textContent="";if(newPassword.value!==confirmPassword.value){passwordMsg.textContent="Passwords do not match.";return}try{await api("profile",{method:"PATCH",json:{currentPassword:currentPassword.value,newPassword:newPassword.value}});passwordMsg.textContent="Password updated.";passwordForm.reset();}catch(e){passwordMsg.textContent=e.message}};
+loadProfile();
+</script></body></html>

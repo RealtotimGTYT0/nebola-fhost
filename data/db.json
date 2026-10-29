@@ -1,0 +1,13 @@
+{
+  "users": {
+    "admin": {
+      "username": "admin",
+      "pw": "70c10feba5f987a61588dfbbc64dc08e:f4ca785de06fc462db27be281ae4ef4bc9773af9c798d0ab75d6fcd91a0d5b169ccc4569f139c6e8238131a4299ab8a7d9047b13739b8475cd46449732ff60ad",
+      "role": "admin",
+      "created": 1793279777099,
+      "displayName": "Site Owner",
+      "bio": "Owner of Nebula File Host"
+    }
+  },
+  "files": {}
+}
