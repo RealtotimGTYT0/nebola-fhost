@@ -25,11 +25,13 @@ async function load() {
       <div class="row">
         <button class="btn sm" onclick="copy('${f.id}')">Copy link</button>
         <a class="btn sm" href="/f/${f.id}" target="_blank">Open</a>
+        ${f.name.toLowerCase().endsWith(".zip") ? `<button class="btn sm" onclick="unzip('${f.id}')">Unzip</button>` : ""}
         <button class="btn sm danger" onclick="del('${f.id}')">Delete</button>
       </div>
     </div>`).join("") : `<p class="muted">No files yet.</p>`;
 }
 function copy(id) { navigator.clipboard.writeText(location.origin + "/f/" + id); toast("Link copied"); }
+async function unzip(id) { toast("Unzipping…"); try { const r = await api("files/" + id + "/unzip", { method: "POST" }); toast(`Extracted ${r.added.length} file(s)` + (r.skipped.length ? `, blocked/skipped ${r.skipped.length}: ` + r.skipped.map(s => s.name).slice(0,5).join(", ") : "")); load(); } catch (e) { toast(e.message); } }
 async function del(id) { if (!confirm("Delete this file?")) return; try { await api("files/" + id, { method: "DELETE" }); toast("Deleted"); load(); } catch (e) { toast(e.message); } }
 function upload(file) {
   return new Promise((res) => {

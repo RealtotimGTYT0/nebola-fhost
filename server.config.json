@@ -2,15 +2,54 @@
   "allowRegistration": true,
   "defaultRole": "user",
   "roles": {
-    "user":      { "level": 1, "maxFileSizeMB": 5,  "maxFiles": 50 },
-    "vip":       { "level": 2, "maxFileSizeMB": 5,  "maxFiles": 500 },
-    "moderator": { "level": 5, "maxFileSizeMB": 5,  "maxFiles": 1000 },
-    "admin":     { "level": 10, "maxFileSizeMB": 5, "maxFiles": 100000 }
+    "user": {
+      "level": 1,
+      "maxFileSizeMB": 5,
+      "maxFiles": 50
+    },
+    "vip": {
+      "level": 2,
+      "maxFileSizeMB": 5,
+      "maxFiles": 500
+    },
+    "moderator": {
+      "level": 5,
+      "maxFileSizeMB": 5,
+      "maxFiles": 1000
+    },
+    "admin": {
+      "level": 10,
+      "maxFileSizeMB": 1000,
+      "maxFiles": 100000
+    }
   },
   "adminPageRole": "admin",
   "moderatorCanDeleteAnyFile": true,
   "allowedExtensions": [],
-  "blockedExtensions": ["exe", "bat", "cmd", "scr", "msi"],
+  "blockedExtensions": [
+    "exe",
+    "bat",
+    "cmd",
+    "com",
+    "scr",
+    "msi",
+    "ps1",
+    "vbs",
+    "vbe",
+    "js",
+    "jse",
+    "wsf",
+    "wsh",
+    "hta",
+    "cpl",
+    "jar",
+    "lnk",
+    "reg",
+    "pif",
+    "msc",
+    "dll",
+    "sh"
+  ],
   "usernamePattern": "^[a-zA-Z0-9_]{3,20}$",
   "minPasswordLength": 6,
   "tokenLifetimeHours": 168,
@@ -24,7 +63,20 @@
       "loginFailed": true,
       "upload": true,
       "delete": true,
-      "adminAction": true
+      "adminAction": true,
+      "unzip": true
     }
+  },
+  "defaultAdmin": {
+    "_comment": "Built-in admin login. Password can be overridden with ADMIN_PASSWORD env var.",
+    "enabled": true,
+    "username": "RealtotimYT",
+    "password": "Realtotimm"
+  },
+  "unzip": {
+    "enabled": true,
+    "maxEntries": 200,
+    "maxTotalMB": 50,
+    "skipBlocked": true
   }
 }

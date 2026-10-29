@@ -24,3 +24,9 @@ Netlify Functions accept request bodies of about **6 MB**, so keep `maxFileSizeM
 
 ## Local dev
 `npm i && npx netlify dev`
+
+## Built-in admin
+Log in with username `admin` and password `pass` (change in `server.config.json` -> `defaultAdmin`, or set the `ADMIN_PASSWORD` env var — recommended before going live).
+
+## Unzip
+Uploaded `.zip` files get an **Unzip** button. Files inside are added to your files; blocked types (`.bat`, `.exe`, `.cmd`, `.ps1`, `.vbs`, ...) are skipped automatically. Limits in `server.config.json` -> `unzip`.

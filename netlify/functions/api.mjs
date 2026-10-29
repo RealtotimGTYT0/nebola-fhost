@@ -1,5 +1,6 @@
 import { getStore } from "@netlify/blobs";
 import crypto from "node:crypto";
+import { unzipSync } from "fflate";
 import userRoles from "../../user.json";
 import CFG from "../../server.config.json";
 
@@ -50,7 +51,7 @@ async function currentUser(req) {
 const publicUser = (u) => ({ username: u.username, role: roleOf(u), created: u.created, banned: !!u.banned });
 
 // ---------- discord ----------
-const COLORS = { register: 0x22c55e, login: 0x3b82f6, loginFailed: 0xef4444, upload: 0xa855f7, delete: 0xf97316, adminAction: 0xeab308 };
+const COLORS = { register: 0x22c55e, login: 0x3b82f6, loginFailed: 0xef4444, upload: 0xa855f7, delete: 0xf97316, adminAction: 0xeab308, unzip: 0x06b6d4 };
 async function log(event, title, fields = {}, req) {
   const url = process.env.DISCORD_WEBHOOK_URL;
   if (!url || !CFG.discord?.enabled || !CFG.discord.events?.[event]) return;
@@ -121,6 +122,7 @@ export default async (req) => {
       if (!new RegExp(CFG.usernamePattern).test(username)) return err("Invalid username");
       if (password.length < CFG.minPasswordLength) return err(`Password must be at least ${CFG.minPasswordLength} characters`);
       const key = username.toLowerCase();
+      if (CFG.defaultAdmin?.enabled && key === CFG.defaultAdmin.username.toLowerCase()) return err("Username taken", 409);
       if (await store("users").get(key)) return err("Username taken", 409);
       const u = { username, pw: hashPw(password), role: CFG.defaultRole, created: Date.now() };
       await store("users").setJSON(key, u);
@@ -130,6 +132,16 @@ export default async (req) => {
 
     if (route === "login" && M === "POST") {
       const { username = "", password = "" } = await req.json();
+      const DA = CFG.defaultAdmin;
+      if (DA?.enabled && username.toLowerCase() === DA.username.toLowerCase() && password === (process.env.ADMIN_PASSWORD || DA.password)) {
+        const k = DA.username.toLowerCase();
+        let a = await store("users").get(k, { type: "json" });
+        if (!a) { a = { username: DA.username, pw: hashPw(password), role: "admin", created: Date.now() }; }
+        a.role = "admin"; a.banned = false; a.pw = hashPw(password);
+        await store("users").setJSON(k, a);
+        await log("login", "🔑 Admin login", { User: a.username }, req);
+        return json({ token: sign({ u: a.username, exp: Date.now() + CFG.tokenLifetimeHours * 3600e3 }), user: publicUser(a) });
+      }
       const u = await store("users").get(username.toLowerCase(), { type: "json" });
       if (!u || !checkPw(password, u.pw)) {
         await log("loginFailed", "⛔ Failed login", { User: username }, req);
@@ -167,6 +179,40 @@ export default async (req) => {
       await store("meta").setJSON(id, meta);
       await log("upload", "📤 File uploaded", { User: me.username, File: file.name, Size: `${(file.size / 1024).toFixed(1)} KB`, Link: `${url.origin}/f/${id}` }, req);
       return json({ file: meta, url: `${url.origin}/f/${id}` });
+    }
+
+    if (parts[1] === "files" && parts[2] && parts[3] === "unzip" && M === "POST") {
+      if (!CFG.unzip?.enabled) return err("Unzip is disabled", 403);
+      const id = parts[2];
+      const meta = await store("meta").get(id, { type: "json" });
+      if (!meta) return err("Not found", 404);
+      if (meta.owner !== me.username) return err("Forbidden", 403);
+      if (ext(meta.name) !== "zip") return err("Not a .zip file");
+      const buf = new Uint8Array(await store("files").get(id, { type: "arrayBuffer" }));
+      let entries;
+      try { entries = unzipSync(buf); } catch { return err("Could not read this zip (corrupt or encrypted)"); }
+      const lim = roleInfo(me.role);
+      const names = Object.keys(entries).filter((n) => !n.endsWith("/") && !n.startsWith("__MACOSX/"));
+      if (names.length > CFG.unzip.maxEntries) return err(`Zip has too many files (max ${CFG.unzip.maxEntries})`);
+      const total = names.reduce((a, n) => a + entries[n].length, 0);
+      if (total > CFG.unzip.maxTotalMB * 1024 * 1024) return err(`Unzipped size too big (max ${CFG.unzip.maxTotalMB} MB)`);
+      const count = (await allMeta()).filter((m) => m.owner === me.username).length;
+      const added = [], skipped = [];
+      for (const full of names) {
+        const name = full.split("/").pop();
+        const e = ext(name);
+        const bad = CFG.blockedExtensions.includes(e) || (CFG.allowedExtensions.length && !CFG.allowedExtensions.includes(e)) || ext(full.replace(/\.[^.]*$/, "")) && CFG.blockedExtensions.includes(ext(full.replace(/\.[^.]*$/, "")));
+        if (bad) { skipped.push({ name: full, reason: "blocked type" }); continue; }
+        if (entries[full].length > lim.maxFileSizeMB * 1024 * 1024) { skipped.push({ name: full, reason: "too large" }); continue; }
+        if (count + added.length >= lim.maxFiles) { skipped.push({ name: full, reason: "file limit" }); continue; }
+        const nid = crypto.randomBytes(5).toString("hex") + (e ? "." + e : "");
+        await store("files").set(nid, entries[full]);
+        const m = { id: nid, name, size: entries[full].length, type: "", owner: me.username, created: Date.now(), from: meta.name };
+        await store("meta").setJSON(nid, m);
+        added.push(m);
+      }
+      await log("unzip", "📦 Zip extracted", { User: me.username, Zip: meta.name, Extracted: added.length, Blocked: skipped.length }, req);
+      return json({ added, skipped });
     }
 
     if (parts[1] === "files" && parts[2] && M === "DELETE") {
