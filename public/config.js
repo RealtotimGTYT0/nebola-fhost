@@ -43,7 +43,6 @@ window.SITE = {
   nav: [
     { label: "Home", href: "/" },
     { label: "Dashboard", href: "/dashboard.html", auth: true },
-    { label: "Owner Profile", href: "/owner.html", auth: true },
     { label: "Admin", href: "/admin.html", admin: true }
   ]
 };

@@ -1,42 +1,26 @@
-# Nebula File Host — Local Edition
+# Nebula File Host (Netlify)
 
-This is the local, npm-startable edition of the Nebula file host. It keeps the original site's dark neon design and includes registration/login, file uploads and share links, user roles, admin controls, and an Owner Profile page.
+Plain HTML/JS front end with one Netlify Function backend. Files and users are stored in **Netlify Blobs**, so there's no database to set up.
 
-## Run locally
+## Deploy
+1. Push this folder to GitHub and import it in Netlify. You can also run `npm i && npx netlify deploy --prod`.
+2. In Netlify → Site settings → Environment variables, add:
+   - `JWT_SECRET`: any long random string (**required**)
+   - `DISCORD_WEBHOOK_URL`: your Discord webhook URL (*optional*; leave it out to turn logging off)
+3. Register an account named `admin`. `user.json` gives that account the admin role, so it can open `/admin.html`.
 
-1. Install **Node.js 18 or newer**.
-2. Open a terminal in this folder.
-3. Run:
+## Customise
+| File | What it controls |
+|---|---|
+| `public/config.js` | Name, logo, tagline, colours, font, background effects, nav links, role badge colours, feature toggles |
+| `public/style.css` | Full styling, built on CSS variables |
+| `server.config.json` | Roles (level, max file size, max files), open/closed registration, allowed/blocked extensions, username rules, Discord events |
+| `user.json` | `"username": "role"`, which overrides any stored role |
 
-   ```bash
-   npm install
-   npm start
-   ```
+The admin page needs the role set in `adminPageRole`, or any role with a higher `level`.
 
-4. Visit **http://localhost:3000**.
+## Limits
+Netlify Functions accept request bodies of about **6 MB**, so keep `maxFileSizeMB` at 5 or lower.
 
-`npm run start` works too; it runs the same `start` script.
-
-## Owner account
-
-On the first start, the server creates the local owner/admin account if one does not already exist:
-
-- Username: `admin`
-- Temporary password: `ChangeMe123!`
-
-Log in and open **Owner Profile** to set your display name, bio, and a new password. Change the temporary password before using the site for anything beyond local testing.
-
-## Local data
-
-The server creates `data/db.json` and `data/files/` automatically. Accounts, profile settings, file metadata, and uploaded files stay in that folder. Back it up to preserve your local data. Delete `data/db.json` only if you intentionally want to reset accounts; uploaded files are stored separately in `data/files/`.
-
-## Configuration
-
-- `public/config.js` — site name, theme, navigation and feature toggles.
-- `public/style.css` — visual styling.
-- `server.config.json` — roles, upload limits, registration and blocked extensions.
-- `user.json` — role overrides. These overrides take priority over roles saved to the local database.
-
-## Notes
-
-This version replaces Netlify Blobs/Functions with a local Express server and local disk storage. It is intended for localhost development, not as a public production deployment. Set a strong `JWT_SECRET` and add appropriate security controls before deploying it publicly.
+## Local dev
+`npm i && npx netlify dev`
