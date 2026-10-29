@@ -1,0 +1,30 @@
+{
+  "allowRegistration": true,
+  "defaultRole": "user",
+  "roles": {
+    "user":      { "level": 1, "maxFileSizeMB": 5,  "maxFiles": 50 },
+    "vip":       { "level": 2, "maxFileSizeMB": 5,  "maxFiles": 500 },
+    "moderator": { "level": 5, "maxFileSizeMB": 5,  "maxFiles": 1000 },
+    "admin":     { "level": 10, "maxFileSizeMB": 5, "maxFiles": 100000 }
+  },
+  "adminPageRole": "admin",
+  "moderatorCanDeleteAnyFile": true,
+  "allowedExtensions": [],
+  "blockedExtensions": ["exe", "bat", "cmd", "scr", "msi"],
+  "usernamePattern": "^[a-zA-Z0-9_]{3,20}$",
+  "minPasswordLength": 6,
+  "tokenLifetimeHours": 168,
+  "discord": {
+    "enabled": true,
+    "username": "FileHost Logger",
+    "avatarUrl": "",
+    "events": {
+      "register": true,
+      "login": true,
+      "loginFailed": true,
+      "upload": true,
+      "delete": true,
+      "adminAction": true
+    }
+  }
+}
